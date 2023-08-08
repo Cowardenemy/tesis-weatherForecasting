@@ -118,9 +118,9 @@ if __name__ == "__main__":
                         datefmt="%H:%M:%S")
 
     logging.info("Main    : before creating thread")
-    x = threading.Thread(target=thread_function, args=(1,32))
-    y = threading.Thread(target=thread_function, args=(2,33))
-    z = threading.Thread(target=thread_function, args=(3,34))
+    x = threading.Thread(target=thread_function, args=(1,34))
+    y = threading.Thread(target=thread_function, args=(2,35))
+    z = threading.Thread(target=thread_function, args=(3,36))
     logging.info("Main    : before running thread")
     x.start()
     y.start()
