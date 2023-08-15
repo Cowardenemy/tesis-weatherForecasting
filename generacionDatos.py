@@ -1,24 +1,8 @@
 import os
 import pandas as pd
 import numpy as np
-import math
-import scipy
-import statsmodels.api as sm
-from statsmodels.nonparametric.smoothers_lowess import lowess
-import matplotlib.patches as mpatches
-import matplotlib.lines as mlines
-from matplotlib.legend_handler import HandlerLine2D
-from numpy import hstack
 from numpy import array
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import MinMaxScaler
-from keras.models import Sequential
-from keras.layers import Dense, LSTM, Dropout
-import matplotlib.pyplot as plt
-from scipy import signal
-from sklearn.model_selection import TimeSeriesSplit
-import matplotlib.colors as mcolors
 from sktime.distances import (
     dtw_distance,
     ddtw_distance,
@@ -65,7 +49,7 @@ df_temp.head()
 dataset = df_temp.filter(['HUM_MIN','HUM_AVG','HUM_MAX','PRES_MIN','PRES_AVG','PRES_MAX','TEMP_MIN','TEMP_AVG','TEMP_MAX']).values
 dataset = np.array(dataset)
 
-for step_days in range(10,laps+2,1):
+for step_days in range(2,laps+2,1):
     inputnn, target = split_sequences(dataset, step_days)
     windows = np.delete(inputnn, nonOutputColumns, 2)
     targetWindow, windows = windows[-1], windows[:-1]
