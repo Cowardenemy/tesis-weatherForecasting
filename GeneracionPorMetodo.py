@@ -49,7 +49,7 @@ dataset = df_temp.filter(['HUM_MIN','HUM_AVG','HUM_MAX','PRES_MIN','PRES_AVG','P
 dataset = np.array(dataset)
 
 
-for step_days in range(27,laps+2,1):
+for step_days in [13,15]:
     inputnn, target = split_sequences(dataset, step_days)
     windows = np.delete(inputnn, nonOutputColumns, 2)
     targetWindow, windows = windows[-1], windows[:-1]
@@ -59,64 +59,81 @@ for step_days in range(27,laps+2,1):
 
     print("Longitud de ventana actual: ", step_days)
     scaler = MinMaxScaler()
-    for i in range(8):
+    for i in range(9):
         match i:
             case 1:
                 print("CCI")
-                metodo = foxmethod(targetWindow, windows)
-                np.save('CCI' + str(step_days) + 'Win.npy', metodo)
-                print("supuestamente save")
+                try:
+                    metodo = np.load('CCI' + str(step_days) + 'Win.npy')
+                except:
+                    metodo = foxmethod(targetWindow, windows)
+                    np.save('CCI' + str(step_days) + 'Win.npy', metodo)
             case 2:
                 print("DTW")
-                metodo = np.array(
+                try:
+                    metodo = np.load('DTW' + str(step_days) + 'Win.npy')
+                except:
+                    metodo = np.array(
                     ([dtw_distance(targetWindow[:, currentComponent], windows[currentWindow, :, currentComponent]) for
                       currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1, componentsLen)
-                np.save('DTW' + str(step_days) + 'Win.npy', metodo)
+                    np.save('DTW' + str(step_days) + 'Win.npy', metodo)
             case 3:
                 print("DDTW")
-                metodo = np.array(
+                try:
+                    metodo = np.load('DDTW' + str(step_days) + 'Win.npy')
+                except:
+                    metodo = np.array(
                     ([ddtw_distance(targetWindow[:, currentComponent], windows[currentWindow, :, currentComponent]) for
                       currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,
                                                                                                                  componentsLen)
-                np.save('DDTW' + str(step_days) + 'Win.npy', metodo)
+                    np.save('DDTW' + str(step_days) + 'Win.npy', metodo)
             case 4:
                 print("MSM")
-                metodo = np.array(
+                try:
+                    metodo = np.load('MSM' + str(step_days) + 'Win.npy')
+                except:
+                    metodo = np.array(
                     ([msm_distance(targetWindow[:, currentComponent], windows[currentWindow, :, currentComponent]) for
                       currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,
                                                                                                                  componentsLen)
-                np.save('MSM' + str(step_days) + 'Win.npy', metodo)
+                    np.save('MSM' + str(step_days) + 'Win.npy', metodo)
             case 5:
                 print("ERP")
-                metodo = np.array(
+                try:
+                    metodo = np.load('ERP' + str(step_days) + 'Win.npy')
+                except:
+                    metodo = np.array(
                     ([erp_distance(targetWindow[:, currentComponent], windows[currentWindow, :, currentComponent]) for
                       currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,
                                                                                                                  componentsLen)
-                np.save('ERP' + str(step_days) + 'Win.npy', metodo)
+                    np.save('ERP' + str(step_days) + 'Win.npy', metodo)
             case 6:
                 print("LCSS")
-                metodo = np.array(
+                try:
+                    metodo = np.load('LCSS' + str(step_days) + 'Win.npy')
+                except:
+                    metodo = np.array(
                     ([lcss_distance(targetWindow[:, currentComponent], windows[currentWindow, :, currentComponent]) for
                       currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,
                                                                                                                  componentsLen)
-                np.save('LCSS' + str(step_days) + 'Win.npy', metodo)
+                    np.save('LCSS' + str(step_days) + 'Win.npy', metodo)
             case 7:
                 print("TWE")
-                metodo = np.array(
+                try:
+                    metodo = np.load('TWE' + str(step_days) + 'Win.npy')
+                except:
+                    metodo = np.array(
                     ([twe_distance(targetWindow[:, currentComponent], windows[currentWindow, :, currentComponent]) for
                       currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,
                                                                                                                  componentsLen)
-                np.save('TWE' + str(step_days) + 'Win.npy', metodo)
+                    np.save('TWE' + str(step_days) + 'Win.npy', metodo)
             case 8:
                 print("EDR")
-                metodo = np.array(
+                try:
+                    metodo = np.load('EDR' + str(step_days) + 'Win.npy')
+                except:
+                    metodo = np.array(
                     ([edr_distance(targetWindow[:, currentComponent], windows[currentWindow, :, currentComponent]) for
                       currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,
                                                                                                                  componentsLen)
-                np.save('EDR' + str(step_days) + 'Win.npy', metodo)
-
-
-
-
-
-
+                    np.save('EDR' + str(step_days) + 'Win.npy', metodo)
