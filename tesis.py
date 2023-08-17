@@ -1,3 +1,4 @@
+import matplotlib.pyplot
 import pandas as pd
 import numpy as np
 import math
@@ -63,7 +64,8 @@ def combinedOption(op,bestList,kMax,indexMethods):
         plt.xticks(range(1,windowLen+2,1))
         plt.yticks(lims[f])
     plt.tight_layout()
-    plt.savefig("CombinedOption "+methodNames[indexMethods]+".png")
+    plt.savefig("Resultados/Figures/CombinedOption "+methodNames[indexMethods]+".png")
+    matplotlib.pyplot.close("all")
     return newCase,newWeigthedCase
 def calculateDistSimilarity(combinedSlice):
     allMdists = []
@@ -113,20 +115,20 @@ def foxmethod(targetWindow, windows):
 
 
 
-df_temp = pd.read_csv("C:/Users/cowar/- tss/weatherdata.csv", parse_dates= True, index_col= 1)
+df_temp = pd.read_csv("C:/Users/cowar/OneDrive/Documents/GitHub/tesis-weatherForecasting/weatherdata.csv", parse_dates= True, index_col= 1)
 df_temp.head()
 
 dataset = df_temp.filter(['HUM_MIN','HUM_AVG','HUM_MAX','PRES_MIN','PRES_AVG','PRES_MAX','TEMP_MIN','TEMP_AVG','TEMP_MAX']).values
 dataset = np.array(dataset)
-laps = 49
 methodNames = ["Dynamic Time Warping","Derivate Dynamic Time Warping",
                "Move Split Merge","Edit Distance For Real Penalty","Longest Common Subsequence","Time Warp Edit",
               "Edit Distance for Real Sequences","Combined Correlation Index"]
 
 rmseTrain,rmseTest,uTest,uTestDTW  = [],[],[],[]
 meanBestMAE,meanBestMAEDTW,meanWorstMAE,meanWorstMAEDTW = [],[],[],[]
+scaler = MinMaxScaler()
 
-for step_days in range(9,laps+2,1):
+for step_days in range(3,36,1):
    cont = np.arange(1, step_days + 1)
    print("Longitud de ventana actual: ",step_days)
 #División de dataset en ventanas de n longitud
@@ -139,7 +141,7 @@ for step_days in range(9,laps+2,1):
    model.add(Dropout(0.2))
    model.add(Dense(3))
    model.compile(optimizer = 'adam', loss = 'mse')
-   history = model.fit(input_train, target_train, validation_data = (input_test, target_test),batch_size = 16, epochs = 4)
+   history = model.fit(input_train, target_train, validation_data = (input_test, target_test),batch_size = 16, epochs = 100)
 #RMSE de train  y test
    prediction_train = model.predict(input_train)
    RMSE = math.sqrt(np.square(np.subtract(prediction_train, target_train)).mean())
@@ -175,46 +177,13 @@ for step_days in range(9,laps+2,1):
 #Predicción normalizada
    normalizedActualPrediction = (actualPrediction - minComp) / maxComp
 #Evaluación de similitud
-   scaler = MinMaxScaler()
-   print("CCI")
-   correlationPerWindow = foxmethod(targetWindow, windows)
-   print("DTW")
-   DTW = np.array(([dtw_distance(targetWindow[:, currentComponent], windows[currentWindow, :, currentComponent]) for currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,componentsLen)
-   print("DDTW")
-   DDTW = np.array(([ddtw_distance(targetWindow[:,currentComponent],windows[currentWindow,:,currentComponent])for currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,componentsLen)
-   #print("WDTW")
-   #WDTW = np.array(([wdtw_distance(targetWindow[:,currentComponent],windows[currentWindow,:,currentComponent])for currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,componentsLen)
-   print("MSM")
-   MSM = np.array(([msm_distance(targetWindow[:, currentComponent], windows[currentWindow, :, currentComponent]) for currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,componentsLen)
-   print("ERP")
-   ERP = np.array(([erp_distance(targetWindow[:,currentComponent],windows[currentWindow,:,currentComponent])for currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,componentsLen)
-   print("LCSS")
-   LCSS = np.array(([lcss_distance(targetWindow[:,currentComponent],windows[currentWindow,:,currentComponent])for currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,componentsLen)
-   print("TWE")
-   TWE = np.array(([twe_distance(targetWindow[:,currentComponent],windows[currentWindow,:,currentComponent])for currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,componentsLen)
-   #print("WDDTW")
-   #WDDTW = np.array(([wddtw_distance(targetWindow[:,currentComponent],windows[currentWindow,:,currentComponent])for currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,componentsLen)
-   print("EDR")
-   EDR = np.array(([edr_distance(targetWindow[:,currentComponent],windows[currentWindow,:,currentComponent])for currentWindow in range(windowsLen) for currentComponent in range(componentsLen)])).reshape(-1,componentsLen)
-   #allMethods = np.array([DTW, DDTW, WDTW, MSM, ERP, LCSS, TWE, WDDTW, EDR])
-   allMethods = np.array([DTW, DDTW, MSM, ERP, LCSS, TWE, EDR])
-   np.save('allMethods'+str(step_days)+'Win.npy', allMethods)
-   #allMethods = np.load('allMethods2Win.npy')
-   DTW, DDTW, MSM, ERP, LCSS, TWE, EDR = None,None,None,None,None,None,None
-#Normalización de resultados
-   print("Normalizando")
-   allMethodsNorm = []
-   for i in range(len(allMethods)):
-       allMethodsNorm.append(
-           scaler.fit_transform(np.sum(scaler.fit_transform(allMethods[i]), axis=1).reshape(-1, 1)).reshape(1, -1)[
-               0] * -1 + 1)
-   allMethodsNorm.append(correlationPerWindow)
-   allMethodsNorm = np.array(allMethodsNorm)
+   allMethodsNorm = np.load("Metodos/trueAllMethods"+str(step_days)+"Win.npy")
 #Reducción de ruido
    smoothedMethods = []
    for i in range(len(allMethodsNorm)):
        smoothedMethods.append(lowess(allMethodsNorm[i], np.arange(len(allMethodsNorm[i])), smoothnessFactor)[:, 1])
    smoothedMethods = np.array(smoothedMethods)
+
 #Localización de picos y valles
    allMvalleyIndex, allMpeakIndex = [], []
    for i in range(len(smoothedMethods)):
@@ -268,18 +237,20 @@ for step_days in range(9,laps+2,1):
            subWorstMAE.append(rawWorstMAE / componentsLen)
        allMbestMAE.append(subBestMAE)
        allMworstMAE.append(subWorstMAE)
+   import json
+   with open("MAE_B_"+str(step_days), "w") as fp:
+       json.dump(allMbestMAE, fp)
+   with open("MAE_W_" + str(step_days), "w") as fp:
+       json.dump(allMworstMAE, fp)
+   #with open("test", "rb") as fp:   # Unpickling
+       #b = pickle.load(fp)
    zValues = []
    for i in range(len(allMethodsNorm)):
        U1,pValue = scipy.stats.mannwhitneyu(allMbestMAE[i], allMworstMAE[i], method="exact")
        nx, ny = len(allMbestMAE[i]), len(allMworstMAE[i])
-
-       z = (U1 - (nx*ny /2)) / np.sqrt(nx*ny * (nx + ny + 1)/ 12)
-       uTest.append(z)
-       U1,pValue = scipy.stats.mannwhitneyu(allMbestMAE[i], allMworstMAE[i], method="exact")
-       nx, ny = len(allMbestMAE[i]), len(allMworstMAE[i])
        z = (U1 - (nx*ny /2)) / np.sqrt(nx*ny * (nx + ny + 1)/ 12)
        zValues.append(z)
-
+   np.save("zValues"+str(step_days)+"Win.npy",np.array(zValues))
    d = {'Method': methodNames}
    dw = {'Method': methodNames}
    columns = [1, 2, 3, 5, 7, 10, 15]
@@ -304,13 +275,13 @@ for step_days in range(9,laps+2,1):
 
    dfw = pd.DataFrame.from_dict(data=dw)
    df = pd.DataFrame.from_dict(data=d)
-   df.to_csv('C:/Users/cowar/- tss/Resultados/ResultadosSinPonderar'+ str(step_days) + '.csv')
-   dfw.to_csv('C:/Users/cowar/- tss/Resultados/ResultadosPonderados'+ str(step_days) + '.csv')
+   df.to_csv('C:/Users/cowar/OneDrive/Documents/GitHub/tesis-weatherForecasting/Resultados/Ponderados/ResultadosSinPonderar'+ str(step_days) + '.csv')
+   dfw.to_csv('C:/Users/cowar/OneDrive/Documents/GitHub/tesis-weatherForecasting/Resultados/Ponderados/ResultadosPonderados'+ str(step_days) + '.csv')
 #df = pd.DataFrame(data=np.transpose((rmseTrain,rmseTest,uTest,uTestDTW)),columns = ("RMSE Train","RMSE Test","Z Value", "Z value DTW"), index = np.arange(2,laps+2))
 #df.to_csv('C:/Users/cowar/- tss/Resultados/Resultados.csv')
 #print(df)
 df_mae = pd.DataFrame(data=np.transpose((meanBestMAE,meanBestMAEDTW,meanWorstMAE,meanWorstMAEDTW)),columns = ("Best MAE","Best MAE DTW","Worst MAE", "Worst MAE DTW"), index = np.arange(2,laps+2))
-df_mae.to_csv('C:/Users/cowar/- tss/Resultados/ResultadosMAE.csv')
+df_mae.to_csv('C:/Users/cowar/OneDrive/Documents/GitHub/tesis-weatherForecasting/Resultados/MAE/ResultadosMAE.csv')
 print(df_mae)
 
 plt.figure(figsize=(15,5))
@@ -321,5 +292,5 @@ plt.plot(cont,uTestDTW, color = 'k', label='Z Value DTW')
 plt.xticks(range(1,laps+1,1))
 plt.legend()
 plt.grid()
-plt.savefig('C:/Users/cowar/- tss/Resultados/Resultados_grafica.png')
-plt.show()
+plt.savefig('C:/Users/cowar/OneDrive/Documents/GitHub/tesis-weatherForecasting/Resultados/Figures/Resultados_grafica.png')
+
